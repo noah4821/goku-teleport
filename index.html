@@ -337,7 +337,7 @@ function teleport() {
 
 function drawFrame(results) {
 
-  if (!results.image || !results.segmentationMask) return;
+  if (!results.image) return;
 
   personCtx.clearRect(0, 0, 640, 480);
 
