@@ -1,139 +1,79 @@
 
-
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
 <meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GOKU MODE</title>
 
 <style>
-
-* {
-
-  box-sizing: border-box;
-
-}
+* { box-sizing: border-box; }
 
 body {
-
   margin: 0;
-
   padding: 20px;
-
   background: #080812;
-
   color: white;
-
   font-family: Arial, sans-serif;
-
   text-align: center;
-
 }
 
 h1 {
-
   color: #a879ff;
-
   font-size: 38px;
-
   margin-bottom: 5px;
-
 }
 
-p {
-
-  color: #ccc;
-
-}
+p { color: #ccc; }
 
 canvas {
-
+  display: block;
   width: 100%;
-
   max-width: 640px;
-
+  height: auto;
+  margin: 15px auto;
   background: #222;
-
   border: 2px solid #8b5cf6;
-
   border-radius: 12px;
-
-  margin-top: 15px;
-
 }
+
+video { display: none; }
 
 button {
-
   display: block;
-
   width: 100%;
-
   max-width: 320px;
-
   margin: 12px auto;
-
   padding: 15px;
-
   border: none;
-
   border-radius: 10px;
-
   background: #713cff;
-
   color: white;
-
   font-size: 16px;
-
   font-weight: bold;
-
 }
 
-button:active {
-
-  background: #4c1d95;
-
+button:disabled {
+  opacity: 0.5;
 }
 
 #status {
-
-  color: #a879ff;
-
-  margin: 15px;
-
+  color: #c4a5ff;
   min-height: 24px;
-
 }
-
 </style>
-
 </head>
 
 <body>
 
 <h1>GOKU MODE</h1>
-
-<p>INSTANT TRANSMISSION</p>
+<p>INSTANT TRANSMISSION ⚡</p>
 
 <canvas id="view" width="640" height="480"></canvas>
-
-<video id="camera" autoplay playsinline muted
-
-style="display:none"></video>
-
-<canvas id="background" width="640" height="480"
-
-style="display:none"></canvas>
+<video id="camera" autoplay playsinline muted></video>
 
 <button id="start">START CAMERA</button>
-
 <button id="capture">CAPTURE EMPTY BACKGROUND</button>
-
 <button id="reset">RESET</button>
 
 <p id="status">Press START CAMERA to begin.</p>
@@ -141,249 +81,193 @@ style="display:none"></canvas>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 
 <script>
-
 const video = document.getElementById("camera");
-
 const canvas = document.getElementById("view");
-
 const ctx = canvas.getContext("2d");
-
-const backgroundCanvas = document.getElementById("background");
-
-const backgroundCtx = backgroundCanvas.getContext("2d");
-
 const statusText = document.getElementById("status");
 
-let hands;
-
+let hands = null;
+let stream = null;
 let running = false;
-
-let backgroundReady = false;
-
 let processing = false;
-  
+let backgroundReady = false;
+let backgroundImage = null;
 let teleportUntil = 0;
-
 let previousGesture = false;
+let animationId = null;
 
 function say(message) {
-
   statusText.textContent = message;
-
 }
 
+// Draw the camera continuously
 function drawFrame() {
+  if (!running || video.readyState < 2) return;
 
   ctx.clearRect(0, 0, 640, 480);
 
+  ctx.save();
+  ctx.translate(640, 0);
+  ctx.scale(-1, 1);
+
   if (Date.now() < teleportUntil && backgroundReady) {
-
-    ctx.drawImage(backgroundCanvas, 0, 0, 640, 480);
-
-    ctx.fillStyle = "rgba(140, 60, 255, 0.25)";
-
-    ctx.fillRect(0, 0, 640, 480);
-
-  } else if (video.readyState >= 2) {
-
-    ctx.save();
-
-    ctx.translate(640, 0);
-
-    ctx.scale(-1, 1);
-
+    ctx.drawImage(backgroundImage, 0, 0, 640, 480);
+  } else {
     ctx.drawImage(video, 0, 0, 640, 480);
-
-    ctx.restore();
-
   }
 
+  ctx.restore();
+
+  if (Date.now() < teleportUntil) {
+    ctx.fillStyle = "rgba(140, 60, 255, 0.25)";
+    ctx.fillRect(0, 0, 640, 480);
+  }
 }
 
+// Detect the two-finger gesture
 function checkGesture(results) {
-
   let gesture = false;
 
   if (results.multiHandLandmarks &&
-
       results.multiHandLandmarks.length > 0) {
 
     const hand = results.multiHandLandmarks[0];
 
     const indexUp = hand[8].y < hand[6].y;
-
     const middleUp = hand[12].y < hand[10].y;
-
     const ringDown = hand[16].y > hand[14].y;
-
     const pinkyDown = hand[20].y > hand[18].y;
 
-    if (indexUp && middleUp && ringDown && pinkyDown) {
-
-      gesture = true;
-
-    }
-
+    gesture = indexUp && middleUp && ringDown && pinkyDown;
   }
 
   if (gesture && !previousGesture) {
-
     if (backgroundReady) {
-
       teleportUntil = Date.now() + 1200;
-
-      say("INSTANT TRANSMISSION!");
-
+      say("INSTANT TRANSMISSION! ⚡");
     } else {
-
       say("Capture your empty background first!");
-
     }
-
   }
 
   previousGesture = gesture;
-
 }
 
-async function processFrame() {
+// Hand detection runs separately from camera drawing
+async function detectHands() {
+  if (!running || processing || !hands ||
+      video.readyState < 2) return;
 
-  if (!running) return;
+  processing = true;
 
   try {
-
-    if (video.readyState >= 2) {
-
-      await hands.send({ image: video });
-
-      drawFrame();
-
-    }
-
+    await hands.send({ image: video });
   } catch (error) {
-
-    say("Processing error: " + error.message);
-
+    say("Detection error: " + error.message);
+  } finally {
+    processing = false;
   }
+}
 
-  if (running) {
+// Main animation loop
+function animate() {
+  if (!running) return;
 
-    requestAnimationFrame(processFrame);
+  drawFrame();
+  detectHands();
 
-  }
-
+  animationId = requestAnimationFrame(animate);
 }
 
 async function startCamera() {
+  if (running) return;
 
   try {
-
     say("Starting camera...");
 
-    const stream = await navigator.mediaDevices.getUserMedia({
-
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
       video: {
-
         facingMode: "user",
-
-        width: 640,
-
-        height: 480
-
-      },
-
-      audio: false
-
+        width: { ideal: 640 },
+        height: { ideal: 480 }
+      }
     });
 
     video.srcObject = stream;
-
     await video.play();
 
+    say("Loading hand detection...");
+
     hands = new Hands({
-
-      locateFile: (file) =>
-
+      locateFile: file =>
         "https://cdn.jsdelivr.net/npm/@mediapipe/hands/" + file
-
     });
 
     hands.setOptions({
-
       maxNumHands: 1,
-
-      modelComplexity: 1,
-
+      modelComplexity: 0,
       minDetectionConfidence: 0.6,
-
       minTrackingConfidence: 0.6
-
     });
 
     hands.onResults(checkGesture);
 
     running = true;
-
     say("Camera ready! Capture your empty background.");
 
-    processFrame();
+    animate();
 
   } catch (error) {
+    say("Error: " + error.message);
 
-    say("Camera error: " + error.message);
-
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      stream = null;
+    }
   }
-
 }
 
 function captureBackground() {
-
   if (!running || video.readyState < 2) {
-
     say("Start the camera first!");
-
     return;
-
   }
 
-  backgroundCtx.save();
+  backgroundImage = document.createElement("canvas");
+  backgroundImage.width = 640;
+  backgroundImage.height = 480;
 
-  backgroundCtx.translate(640, 0);
+  const bgCtx = backgroundImage.getContext("2d");
 
-  backgroundCtx.scale(-1, 1);
-
-  backgroundCtx.drawImage(video, 0, 0, 640, 480);
-
-  backgroundCtx.restore();
+  bgCtx.save();
+  bgCtx.translate(640, 0);
+  bgCtx.scale(-1, 1);
+  bgCtx.drawImage(video, 0, 0, 640, 480);
+  bgCtx.restore();
 
   backgroundReady = true;
-
   say("Background captured! Show two fingers to teleport.");
-
 }
 
 function resetApp() {
-
   backgroundReady = false;
-
+  backgroundImage = null;
   teleportUntil = 0;
-
   previousGesture = false;
 
-  say("Background reset. Capture it again.");
-
-  drawFrame();
-
+  say("Reset! Capture your empty background again.");
 }
 
-document.getElementById("start").addEventListener("click", startCamera);
+document.getElementById("start")
+  .addEventListener("click", startCamera);
 
-document.getElementById("capture").addEventListener("click", captureBackground);
+document.getElementById("capture")
+  .addEventListener("click", captureBackground);
 
-document.getElementById("reset").addEventListener("click", resetApp);
+document.getElementById("reset")
+  .addEventListener("click", resetApp);
 
 </script>
-
 </body>
-
 </html>
