@@ -1,41 +1,54 @@
 
+
 <!DOCTYPE html>
 
-<html>
+<html lang="en">
 
 <head>
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
 
-<title>Goku Instant Transmission</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>GOKU MODE</title>
 
 <style>
+
+* {
+
+  box-sizing: border-box;
+
+}
 
 body {
 
   margin: 0;
 
-  background: #050b20;
+  padding: 20px;
+
+  background: #080812;
 
   color: white;
 
-  font-family: Arial;
+  font-family: Arial, sans-serif;
 
   text-align: center;
 
 }
 
-h1 { color: #55baff; }
+h1 {
 
-#screen {
+  color: #a879ff;
 
-  position: relative;
+  font-size: 38px;
 
-  width: 100%;
+  margin-bottom: 5px;
 
-  max-width: 600px;
+}
 
-  margin: auto;
+p {
+
+  color: #ccc;
 
 }
 
@@ -43,31 +56,59 @@ canvas {
 
   width: 100%;
 
-  display: block;
+  max-width: 640px;
 
-  border-radius: 15px;
+  background: #222;
+
+  border: 2px solid #8b5cf6;
+
+  border-radius: 12px;
+
+  margin-top: 15px;
 
 }
 
 button {
 
-  padding: 14px;
+  display: block;
 
-  margin: 7px;
+  width: 100%;
 
-  border: 0;
+  max-width: 320px;
 
-  border-radius: 12px;
+  margin: 12px auto;
 
-  background: #087cff;
+  padding: 15px;
+
+  border: none;
+
+  border-radius: 10px;
+
+  background: #713cff;
 
   color: white;
 
   font-size: 16px;
 
+  font-weight: bold;
+
 }
 
-p { color: #b9d9ff; }
+button:active {
+
+  background: #4c1d95;
+
+}
+
+#status {
+
+  color: #a879ff;
+
+  margin: 15px;
+
+  min-height: 24px;
+
+}
 
 </style>
 
@@ -75,29 +116,27 @@ p { color: #b9d9ff; }
 
 <body>
 
-<h1>⚡ GOKU MODE ⚡</h1>
+<h1>GOKU MODE</h1>
 
-<p>Instant Transmission</p>
+<p>INSTANT TRANSMISSION</p>
 
-<div id="screen">
+<canvas id="view" width="640" height="480"></canvas>
 
-<canvas id="view" width="640" height="480" style="background:#111; min-height:300px;"></canvas>
+<video id="camera" autoplay playsinline muted
 
-</div>
+style="display:none"></video>
 
-<video id="camera" autoplay playsinline style="display:none"></video>
+<canvas id="background" width="640" height="480"
+
+style="display:none"></canvas>
 
 <button id="start">START CAMERA</button>
 
-<button id="background">CAPTURE EMPTY BACKGROUND</button>
+<button id="capture">CAPTURE EMPTY BACKGROUND</button>
 
 <button id="reset">RESET</button>
 
-<p id="status">Press START CAMERA</p>
-
-<p>Step out of view to capture the empty background, then return.</p>
-
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js"></script>
+<p id="status">Press START CAMERA to begin.</p>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 
@@ -109,45 +148,127 @@ const canvas = document.getElementById("view");
 
 const ctx = canvas.getContext("2d");
 
-ctx.fillStyle = "#222";ctx.fillRect(0, 0, 640, 480);
-  
+const backgroundCanvas = document.getElementById("background");
+
+const backgroundCtx = backgroundCanvas.getContext("2d");
+
 const statusText = document.getElementById("status");
 
-const personCanvas = document.createElement("canvas");
-
-personCanvas.width = 640;
-
-personCanvas.height = 480;
-
-const personCtx = personCanvas.getContext("2d");
-
-const bgCanvas = document.createElement("canvas");
-
-bgCanvas.width = 640;
-
-bgCanvas.height = 480;
-
-const bgCtx = bgCanvas.getContext("2d");
-
-let backgroundReady = false;
-
-let fade = 0;
-
-let teleporting = false;
-
-let vanished = false;
-
-let particles = [];
-
-let lastGesture = 0;
-
-let segmentation, hands;
+let hands;
 
 let running = false;
 
-function say(text) {
+let backgroundReady = false;
 
-  statusText.textContent = text;
+let teleportUntil = 0;
+
+let previousGesture = false;
+
+function say(message) {
+
+  statusText.textContent = message;
+
+}
+
+function drawFrame() {
+
+  ctx.clearRect(0, 0, 640, 480);
+
+  if (Date.now() < teleportUntil && backgroundReady) {
+
+    ctx.drawImage(backgroundCanvas, 0, 0, 640, 480);
+
+    ctx.fillStyle = "rgba(140, 60, 255, 0.25)";
+
+    ctx.fillRect(0, 0, 640, 480);
+
+  } else if (video.readyState >= 2) {
+
+    ctx.save();
+
+    ctx.translate(640, 0);
+
+    ctx.scale(-1, 1);
+
+    ctx.drawImage(video, 0, 0, 640, 480);
+
+    ctx.restore();
+
+  }
+
+}
+
+function checkGesture(results) {
+
+  let gesture = false;
+
+  if (results.multiHandLandmarks &&
+
+      results.multiHandLandmarks.length > 0) {
+
+    const hand = results.multiHandLandmarks[0];
+
+    const indexUp = hand[8].y < hand[6].y;
+
+    const middleUp = hand[12].y < hand[10].y;
+
+    const ringDown = hand[16].y > hand[14].y;
+
+    const pinkyDown = hand[20].y > hand[18].y;
+
+    if (indexUp && middleUp && ringDown && pinkyDown) {
+
+      gesture = true;
+
+    }
+
+  }
+
+  if (gesture && !previousGesture) {
+
+    if (backgroundReady) {
+
+      teleportUntil = Date.now() + 1200;
+
+      say("INSTANT TRANSMISSION!");
+
+    } else {
+
+      say("Capture your empty background first!");
+
+    }
+
+  }
+
+  previousGesture = gesture;
+
+}
+
+async function processFrame() {
+
+  if (!running) return;
+
+  try {
+
+    if (video.readyState >= 2) {
+
+      await hands.send({ image: video });
+
+      drawFrame();
+
+    }
+
+  } catch (error) {
+
+    say("Processing error: " + error.message);
+
+  }
+
+  if (running) {
+
+    requestAnimationFrame(processFrame);
+
+  }
 
 }
 
@@ -155,9 +276,19 @@ async function startCamera() {
 
   try {
 
+    say("Starting camera...");
+
     const stream = await navigator.mediaDevices.getUserMedia({
 
-      video: { facingMode: "user", width: 640, height: 480 },
+      video: {
+
+        facingMode: "user",
+
+        width: 640,
+
+        height: 480
+
+      },
 
       audio: false
 
@@ -167,27 +298,11 @@ async function startCamera() {
 
     await video.play();
 
-    segmentation = new SelfieSegmentation({
-
-      locateFile: file =>
-
-        `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
-
-    });
-
-    segmentation.setOptions({
-
-      modelSelection: 1
-
-    });
-
-    segmentation.onResults(drawFrame);
-
     hands = new Hands({
 
-      locateFile: file =>
+      locateFile: (file) =>
 
-        `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        "https://cdn.jsdelivr.net/npm/@mediapipe/hands/" + file
 
     });
 
@@ -195,9 +310,9 @@ async function startCamera() {
 
       maxNumHands: 1,
 
-      modelComplexity: 0,
+      modelComplexity: 1,
 
-      minDetectionConfidence: 0.65,
+      minDetectionConfidence: 0.6,
 
       minTrackingConfidence: 0.6
 
@@ -213,65 +328,7 @@ async function startCamera() {
 
   } catch (error) {
 
-    say("Camera error. Open this website in Safari and allow camera access.");
-
-  }
-
-}
-
-async function processFrame() {
-
-  if (!running) return;
-
-  if (video.readyState >= 2) {
-
-    await Promise.all([
-
-      segmentation.send({image: video}),
-
-      hands.send({image: video})
-
-    ]);
-
-  }
-  
-  requestAnimationFrame(processFrame);
-
-}
-
-function checkGesture(results) {
-
-  if (!results.multiHandLandmarks ||
-
-      !results.multiHandLandmarks.length) return;
-
-  const points = results.multiHandLandmarks[0];
-
-  const index = points[8];
-
-  const middle = points[12];
-
-  // Two raised fingertips near the upper centre of the image
-
-  const gesture =
-
-    index.y < 0.43 &&
-
-    middle.y < 0.43 &&
-
-    Math.abs(index.x - middle.x) < 0.20 &&
-
-    (index.x + middle.x) / 2 > 0.25 &&
-
-    (index.x + middle.x) / 2 < 0.75;
-
-  if (gesture && Date.now() - lastGesture > 3500 &&
-
-      backgroundReady && !teleporting && !vanished) {
-
-    lastGesture = Date.now();
-
-    teleport();
+    say("Camera error: " + error.message);
 
   }
 
@@ -279,213 +336,52 @@ function checkGesture(results) {
 
 function captureBackground() {
 
-  if (video.readyState < 2) {
+  if (!running || video.readyState < 2) {
 
-    say("Start the camera first.");
+    say("Start the camera first!");
 
     return;
 
   }
 
-  bgCtx.save();
+  backgroundCtx.save();
 
-  bgCtx.translate(640, 0);
+  backgroundCtx.translate(640, 0);
 
-  bgCtx.scale(-1, 1);
+  backgroundCtx.scale(-1, 1);
 
-  bgCtx.drawImage(video, 0, 0, 640, 480);
+  backgroundCtx.drawImage(video, 0, 0, 640, 480);
 
-  bgCtx.restore();
+  backgroundCtx.restore();
 
   backgroundReady = true;
 
-  say("Background saved! Come back into view and try the gesture.");
+  say("Background captured! Show two fingers to teleport.");
 
 }
 
-function teleport() {
+function resetApp() {
 
-  teleporting = true;
+  backgroundReady = false;
 
-  fade = 1;
+  teleportUntil = 0;
 
-  vanished = false;
+  previousGesture = false;
 
-  say("⚡ INSTANT TRANSMISSION!");
+  say("Background reset. Capture it again.");
 
-  for (let i = 0; i < 100; i++) {
-
-    particles.push({
-
-      x: 320 + (Math.random() - 0.5) * 220,
-
-      y: 240 + (Math.random() - 0.5) * 220,
-
-      vx: (Math.random() - 0.5) * 12,
-
-      vy: (Math.random() - 0.5) * 12,
-
-      life: 1,
-
-      size: Math.random() * 5 + 2
-
-    });
-
-  }
+  drawFrame();
 
 }
 
-function drawFrame(results) {
+document.getElementById("start").addEventListener("click", startCamera);
 
-  if (!results.image) return;
+document.getElementById("capture").addEventListener("click", captureBackground);
 
-say("Camera frames received!");
-  
-  personCtx.clearRect(0, 0, 640, 480);
-
-  personCtx.save();
-
-  personCtx.translate(640, 0);
-
-  personCtx.scale(-1, 1);
-
-  personCtx.drawImage(results.image, 0, 0, 640, 480);
-
-  personCtx.globalCompositeOperation = "destination-in";
-
-  personCtx.drawImage(results.segmentationMask, 0, 0, 640, 480);
-
-  personCtx.restore();
-
-  ctx.clearRect(0, 0, 640, 480);
-
-  if (backgroundReady) {
-
-    ctx.drawImage(bgCanvas, 0, 0);
-
-  } else {
-
-    ctx.save();
-
-    ctx.translate(640, 0);
-
-    ctx.scale(-1, 1);
-
-    ctx.drawImage(results.image, 0, 0, 640, 480);
-
-    ctx.restore();
-
-  }
-
-  if (!vanished) {
-
-    ctx.save();
-
-    ctx.globalAlpha = teleporting ? Math.max(0, fade) : 1;
-
-    ctx.drawImage(personCanvas, 0, 0);
-
-    ctx.restore();
-
-  }
-
-  if (teleporting) {
-
-    ctx.save();
-
-    ctx.globalCompositeOperation = "screen";
-
-    ctx.shadowBlur = 25;
-
-    ctx.shadowColor = "#00aaff";
-
-    ctx.strokeStyle = "#65dfff";
-
-    ctx.lineWidth = 5;
-
-    for (let i = 0; i < 3; i++) {
-
-      ctx.beginPath();
-
-      ctx.ellipse(320, 240, 90 + i * 25, 130 + i * 15,
-
-        0, 0, Math.PI * 2);
-
-      ctx.stroke();
-
-    }
-
-    ctx.restore();
-
-    particles.forEach(p => {
-
-      p.x += p.vx;
-
-      p.y += p.vy;
-
-      p.life -= 0.018;
-
-      ctx.globalAlpha = Math.max(0, p.life);
-
-      ctx.fillStyle = "#75ddff";
-
-      ctx.shadowBlur = 15;
-
-      ctx.shadowColor = "#00aaff";
-
-      ctx.beginPath();
-
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-
-      ctx.fill();
-
-    });
-
-    ctx.globalAlpha = 1;
-
-    particles = particles.filter(p => p.life > 0);
-
-    fade -= 0.025;
-
-    if (fade <= 0) {
-
-      fade = 0;
-
-      teleporting = false;
-
-      vanished = true;
-
-      say("TELEPORTED! Press RESET to return.");
-
-    }
-
-  }
-
-}
-
-function reset() {
-
-  teleporting = false;
-
-  vanished = false;
-
-  fade = 0;
-
-  particles = [];
-
-  say("Ready! Try the two-finger gesture.");
-
-}
-
-document.getElementById("start").onclick = startCamera;
-
-document.getElementById("background").onclick = captureBackground;
-
-document.getElementById("reset").onclick = reset;
+document.getElementById("reset").addEventListener("click", resetApp);
 
 </script>
 
 </body>
 
 </html>
-
