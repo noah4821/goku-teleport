@@ -10,7 +10,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>GOKU MODE 4.0</title>
+<title>GOKU MODE 5.0</title>
 
 <style>
 
@@ -254,29 +254,29 @@ let backgroundCanvas = null;
 
 let backgroundReady = false;
 
-let maskCanvas = document.createElement("canvas");
+const maskCanvas = document.createElement("canvas");
 
 maskCanvas.width = W;
 
 maskCanvas.height = H;
 
-let maskCtx = maskCanvas.getContext("2d");
+const maskCtx = maskCanvas.getContext("2d");
 
-let subjectCanvas = document.createElement("canvas");
+const subjectCanvas = document.createElement("canvas");
 
 subjectCanvas.width = W;
 
 subjectCanvas.height = H;
 
-let subjectCtx = subjectCanvas.getContext("2d");
+const subjectCtx = subjectCanvas.getContext("2d");
 
-let outlineCanvas = document.createElement("canvas");
+const outlineCanvas = document.createElement("canvas");
 
 outlineCanvas.width = W;
 
 outlineCanvas.height = H;
 
-let outlineCtx = outlineCanvas.getContext("2d");
+const outlineCtx = outlineCanvas.getContext("2d");
 
 let hasMask = false;
 
@@ -298,7 +298,7 @@ function smooth(t) {
 
 }
 
-// RECEIVE PERSON SEGMENTATION
+// BODY SEGMENTATION
 
 function onSegmentation(results) {
 
@@ -306,7 +306,7 @@ function onSegmentation(results) {
 
   maskCtx.drawImage(results.segmentationMask, 0, 0, W, H);
 
-  // Create a separate image of the person.
+  // Extract the person from the camera.
 
   subjectCtx.clearRect(0, 0, W, H);
 
@@ -320,7 +320,7 @@ function onSegmentation(results) {
 
   subjectCtx.globalCompositeOperation = "source-over";
 
-  // Build a white outline by expanding the person mask.
+  // Expand the mask to create an outline.
 
   outlineCtx.clearRect(0, 0, W, H);
 
@@ -342,7 +342,7 @@ function onSegmentation(results) {
 
   });
 
-  // Colour the expanded mask white.
+  // Make the expanded mask white.
 
   outlineCtx.globalCompositeOperation = "source-in";
 
@@ -350,7 +350,7 @@ function onSegmentation(results) {
 
   outlineCtx.fillRect(0, 0, W, H);
 
-  // Remove the inside of the person, leaving only the outline.
+  // Remove the inside, leaving the outside border.
 
   outlineCtx.globalCompositeOperation = "destination-out";
 
@@ -362,7 +362,7 @@ function onSegmentation(results) {
 
 }
 
-// TELEPORTATION ENERGY
+// WHITE ENERGY EFFECT — NO SPINNING CIRCLES
 
 function drawEnergy(time) {
 
@@ -370,75 +370,73 @@ function drawEnergy(time) {
 
   ctx.globalCompositeOperation = "lighter";
 
-  const cx = 320;
+  // Initial teleport flash.
 
-  const cy = 240;
+  if (time < 250) {
 
-  // Expanding energy rings.
+    const flash = 0.8 * (1 - time / 250);
 
-  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = `rgba(255,255,255,${flash})`;
 
-    const progress = ((time / 900) + i / 3) % 1;
-
-    const radius = 40 + progress * 210;
-
-    ctx.beginPath();
-
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-
-    ctx.strokeStyle = `rgba(255,255,255,${(1-progress)*.65})`;
-
-    ctx.lineWidth = 2;
-
-    ctx.shadowColor = "white";
-
-    ctx.shadowBlur = 15;
-
-    ctx.stroke();
+    ctx.fillRect(0, 0, W, H);
 
   }
 
-  // Moving energy streaks.
+  // Fast horizontal energy streaks.
 
-  for (let i = 0; i < 9; i++) {
+  for (let i = 0; i < 14; i++) {
 
-    const angle = (i / 9) * Math.PI * 2 + time * 0.002;
+    const progress = ((time * 0.0015 + i * 0.13) % 1);
 
-    const distance = 85 + (i % 3) * 32;
+    const y = (i * 37 + 40) % H;
 
-    const x = cx + Math.cos(angle) * distance;
-
-    const y = cy + Math.sin(angle) * distance;
+    const x = progress * W;
 
     ctx.beginPath();
 
     ctx.moveTo(x, y);
 
-    ctx.lineTo(
+    ctx.lineTo(x - 65, y + 8);
 
-      x + Math.cos(angle) * 32,
-
-      y + Math.sin(angle) * 32
-
-    );
-
-    ctx.strokeStyle = "rgba(255,255,255,.8)";
+    ctx.strokeStyle = `rgba(255,255,255,${1-progress})`;
 
     ctx.lineWidth = 2;
 
-    ctx.shadowBlur = 12;
+    ctx.shadowColor = "white";
+
+    ctx.shadowBlur = 14;
 
     ctx.stroke();
 
   }
 
-  // Bright teleport flash.
+  // Fading energy particles.
 
-  if (time < 180) {
+  for (let i = 0; i < 28; i++) {
 
-    ctx.fillStyle =
+    const progress = ((time * 0.0007 + i * 0.037) % 1);
 
-      `rgba(255,255,255,${.65 * (1-time/180)})`;
+    const x = (i * 83 + progress * 100) % W;
+
+    const y = (i * 47 + progress * 75) % H;
+
+    ctx.fillStyle = `rgba(255,255,255,${1-progress})`;
+
+    ctx.beginPath();
+
+    ctx.arc(x, y, 1 + progress * 3, 0, Math.PI * 2);
+
+    ctx.fill();
+
+  }
+
+  // Reappearance flash.
+
+  if (time > 3650 && time < 3900) {
+
+    const flash = 0.55 * (1 - (time - 3650) / 250);
+
+    ctx.fillStyle = `rgba(255,255,255,${flash})`;
 
     ctx.fillRect(0, 0, W, H);
 
@@ -448,7 +446,7 @@ function drawEnergy(time) {
 
 }
 
-// DRAW CAMERA AND EFFECTS
+// CAMERA AND TELEPORT DRAWING
 
 function drawFrame(now) {
 
@@ -462,7 +460,7 @@ function drawFrame(now) {
 
     time = now - effectStart;
 
-    if (time > 1900) {
+    if (time > 4400) {
 
       effectStart = null;
 
@@ -476,15 +474,13 @@ function drawFrame(now) {
 
   ctx.save();
 
-  // Mirror the entire scene.
-
   ctx.translate(W, 0);
 
   ctx.scale(-1, 1);
 
   if (time >= 0 && backgroundReady) {
 
-    // Show the captured empty background.
+    // Empty background stays visible.
 
     ctx.drawImage(backgroundCanvas, 0, 0, W, H);
 
@@ -492,21 +488,21 @@ function drawFrame(now) {
 
       let opacity;
 
-      if (time < 600) {
+      if (time < 700) {
 
-        opacity = 1 - smooth(time / 600);
+        opacity = 1 - smooth(time / 700);
 
-      } else if (time < 1200) {
+      } else if (time < 3700) {
 
         opacity = 0;
 
       } else {
 
-        opacity = smooth((time - 1200) / 600);
+        opacity = smooth((time - 3700) / 700);
 
       }
 
-      // White outline and glow.
+      // Glowing white body outline.
 
       ctx.save();
 
@@ -514,7 +510,7 @@ function drawFrame(now) {
 
       ctx.shadowColor = "white";
 
-      ctx.shadowBlur = 22;
+      ctx.shadowBlur = 24;
 
       ctx.drawImage(outlineCanvas, 0, 0);
 
@@ -524,7 +520,7 @@ function drawFrame(now) {
 
       ctx.restore();
 
-      // Actual person cutout.
+      // Person cutout.
 
       ctx.save();
 
@@ -537,8 +533,6 @@ function drawFrame(now) {
     }
 
   } else {
-
-    // Normal live camera.
 
     ctx.drawImage(video, 0, 0, W, H);
 
@@ -606,7 +600,7 @@ function checkGesture(results) {
 
 }
 
-// RUN HAND DETECTION
+// HAND DETECTION
 
 async function detectHands() {
 
@@ -628,7 +622,7 @@ async function detectHands() {
 
 }
 
-// RUN BODY SEGMENTATION
+// PERSON DETECTION
 
 async function detectPerson() {
 
@@ -642,7 +636,7 @@ async function detectPerson() {
 
   } catch (error) {
 
-    console.log("Body detection:", error);
+    console.log("Person detection:", error);
 
   }
 
@@ -659,8 +653,6 @@ function animate(now) {
   drawFrame(now);
 
   frameCount++;
-
-  // Spread out the detection work to reduce lag.
 
   if (frameCount % 2 === 0) {
 
@@ -776,7 +768,7 @@ async function startCamera() {
 
 }
 
-// CAPTURE EMPTY BACKGROUND
+// CAPTURE BACKGROUND
 
 function captureBackground() {
 
