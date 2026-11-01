@@ -10,7 +10,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
-<title>GOKU MODE 5.0</title>
+<title>GOKU MODE 6.0</title>
 
 <style>
 
@@ -38,9 +38,7 @@ h1 {
 
   letter-spacing: 5px;
 
-  text-shadow: 0 0 12px white, 0 0 28px #aaa;
-
-  margin-bottom: 5px;
+  text-shadow: 0 0 15px white;
 
 }
 
@@ -71,16 +69,6 @@ h1 {
   border-radius: 12px;
 
   box-shadow: 0 0 12px #ffffff55;
-
-  animation: glow 3s ease-in-out infinite alternate;
-
-}
-
-@keyframes glow {
-
-  from { box-shadow: 0 0 5px #ffffff33; }
-
-  to { box-shadow: 0 0 19px #ffffffaa; }
 
 }
 
@@ -126,8 +114,6 @@ canvas {
 
     linear-gradient(white,white) bottom right / 2px 34px no-repeat;
 
-  opacity: .85;
-
 }
 
 video { display: none; }
@@ -155,8 +141,6 @@ button {
   font-weight: bold;
 
   letter-spacing: 2px;
-
-  transition: .2s;
 
 }
 
@@ -196,7 +180,7 @@ button:disabled { opacity: .5; }
 
 <h1>GOKU MODE</h1>
 
-<p class="subtitle">INSTANT TRANSMISSION</p>
+<p class="subtitle">GHOST TRANSMISSION</p>
 
 <div class="canvas-box">
 
@@ -254,35 +238,35 @@ let backgroundCanvas = null;
 
 let backgroundReady = false;
 
-const maskCanvas = document.createElement("canvas");
-
-maskCanvas.width = W;
-
-maskCanvas.height = H;
-
-const maskCtx = maskCanvas.getContext("2d");
-
-const subjectCanvas = document.createElement("canvas");
-
-subjectCanvas.width = W;
-
-subjectCanvas.height = H;
-
-const subjectCtx = subjectCanvas.getContext("2d");
-
-const outlineCanvas = document.createElement("canvas");
-
-outlineCanvas.width = W;
-
-outlineCanvas.height = H;
-
-const outlineCtx = outlineCanvas.getContext("2d");
-
 let hasMask = false;
 
 let previousGesture = false;
 
 let effectStart = null;
+
+function makeCanvas() {
+
+  const c = document.createElement("canvas");
+
+  c.width = W;
+
+  c.height = H;
+
+  return c;
+
+}
+
+const maskCanvas = makeCanvas();
+
+const maskCtx = maskCanvas.getContext("2d");
+
+const subjectCanvas = makeCanvas();
+
+const subjectCtx = subjectCanvas.getContext("2d");
+
+const outlineCanvas = makeCanvas();
+
+const outlineCtx = outlineCanvas.getContext("2d");
 
 function say(message) {
 
@@ -306,7 +290,7 @@ function onSegmentation(results) {
 
   maskCtx.drawImage(results.segmentationMask, 0, 0, W, H);
 
-  // Extract the person from the camera.
+  // Extract the person.
 
   subjectCtx.clearRect(0, 0, W, H);
 
@@ -320,7 +304,7 @@ function onSegmentation(results) {
 
   subjectCtx.globalCompositeOperation = "source-over";
 
-  // Expand the mask to create an outline.
+  // Create a thin white silhouette outline.
 
   outlineCtx.clearRect(0, 0, W, H);
 
@@ -328,11 +312,11 @@ function onSegmentation(results) {
 
   const offsets = [
 
-    [-4,0], [4,0], [0,-4], [0,4],
+    [-2,0], [2,0], [0,-2], [0,2],
 
-    [-3,-3], [3,-3], [-3,3], [3,3],
+    [-2,-2], [2,-2], [-2,2], [2,2],
 
-    [-6,0], [6,0], [0,-6], [0,6]
+    [-4,0], [4,0], [0,-4], [0,4]
 
   ];
 
@@ -342,15 +326,11 @@ function onSegmentation(results) {
 
   });
 
-  // Make the expanded mask white.
-
   outlineCtx.globalCompositeOperation = "source-in";
 
   outlineCtx.fillStyle = "white";
 
   outlineCtx.fillRect(0, 0, W, H);
-
-  // Remove the inside, leaving the outside border.
 
   outlineCtx.globalCompositeOperation = "destination-out";
 
@@ -362,33 +342,75 @@ function onSegmentation(results) {
 
 }
 
-// WHITE ENERGY EFFECT — NO SPINNING CIRCLES
+// VERTICAL GHOST ENERGY LINES
 
-function drawEnergy(time) {
+function drawGhostLines(time) {
 
   ctx.save();
 
   ctx.globalCompositeOperation = "lighter";
 
-  // Initial teleport flash.
+  for (let i = 0; i < 34; i++) {
 
-  if (time < 250) {
+    const x = (i * 59 + 17) % W;
 
-    const flash = 0.8 * (1 - time / 250);
+    const offset = (time * (0.06 + (i % 4) * 0.025)) % 150;
 
-    ctx.fillStyle = `rgba(255,255,255,${flash})`;
+    const y = -80 + offset;
+
+    const height = 35 + (i % 5) * 24;
+
+    const alpha = 0.18 + (i % 4) * 0.08;
+
+    ctx.beginPath();
+
+    ctx.moveTo(x, y);
+
+    ctx.lineTo(x, y + height);
+
+    ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+
+    ctx.lineWidth = i % 5 === 0 ? 2 : 1;
+
+    ctx.shadowColor = "white";
+
+    ctx.shadowBlur = 5;
+
+    ctx.stroke();
+
+  }
+
+  ctx.restore();
+
+}
+
+// TELEPORT FLASH AND STREAKS
+
+function drawTeleport(time) {
+
+  ctx.save();
+
+  ctx.globalCompositeOperation = "lighter";
+
+  // Initial white flash.
+
+  if (time < 180) {
+
+    const alpha = 0.65 * (1 - time / 180);
+
+    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
 
     ctx.fillRect(0, 0, W, H);
 
   }
 
-  // Fast horizontal energy streaks.
+  // Horizontal energy streaks.
 
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 12; i++) {
 
-    const progress = ((time * 0.0015 + i * 0.13) % 1);
+    const progress = ((time * 0.0015 + i * 0.17) % 1);
 
-    const y = (i * 37 + 40) % H;
+    const y = (i * 43 + 30) % H;
 
     const x = progress * W;
 
@@ -396,7 +418,7 @@ function drawEnergy(time) {
 
     ctx.moveTo(x, y);
 
-    ctx.lineTo(x - 65, y + 8);
+    ctx.lineTo(x - 55, y + 5);
 
     ctx.strokeStyle = `rgba(255,255,255,${1-progress})`;
 
@@ -404,39 +426,19 @@ function drawEnergy(time) {
 
     ctx.shadowColor = "white";
 
-    ctx.shadowBlur = 14;
+    ctx.shadowBlur = 10;
 
     ctx.stroke();
 
   }
 
-  // Fading energy particles.
-
-  for (let i = 0; i < 28; i++) {
-
-    const progress = ((time * 0.0007 + i * 0.037) % 1);
-
-    const x = (i * 83 + progress * 100) % W;
-
-    const y = (i * 47 + progress * 75) % H;
-
-    ctx.fillStyle = `rgba(255,255,255,${1-progress})`;
-
-    ctx.beginPath();
-
-    ctx.arc(x, y, 1 + progress * 3, 0, Math.PI * 2);
-
-    ctx.fill();
-
-  }
-
   // Reappearance flash.
 
-  if (time > 3650 && time < 3900) {
+  if (time > 2400 && time < 2600) {
 
-    const flash = 0.55 * (1 - (time - 3650) / 250);
+    const alpha = 0.5 * (1 - (time - 2400) / 200);
 
-    ctx.fillStyle = `rgba(255,255,255,${flash})`;
+    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
 
     ctx.fillRect(0, 0, W, H);
 
@@ -446,7 +448,7 @@ function drawEnergy(time) {
 
 }
 
-// CAMERA AND TELEPORT DRAWING
+// MAIN DRAWING
 
 function drawFrame(now) {
 
@@ -460,7 +462,7 @@ function drawFrame(now) {
 
     time = now - effectStart;
 
-    if (time > 4400) {
+    if (time > 2900) {
 
       effectStart = null;
 
@@ -480,37 +482,55 @@ function drawFrame(now) {
 
   if (time >= 0 && backgroundReady) {
 
-    // Empty background stays visible.
-
     ctx.drawImage(backgroundCanvas, 0, 0, W, H);
 
     if (hasMask) {
 
-      let opacity;
+      let bodyOpacity = 1;
 
-      if (time < 700) {
+      let outlineOpacity = 1;
 
-        opacity = 1 - smooth(time / 700);
+      // Disappear over 0.45 seconds.
 
-      } else if (time < 3700) {
+      if (time < 450) {
 
-        opacity = 0;
+        bodyOpacity = 1 - smooth(time / 450);
 
-      } else {
-
-        opacity = smooth((time - 3700) / 700);
+        outlineOpacity = 1;
 
       }
 
-      // Glowing white body outline.
+      // Stay completely invisible for 2 seconds.
+
+      else if (time < 2450) {
+
+        bodyOpacity = 0;
+
+        outlineOpacity = 0;
+
+      }
+
+      // Outline forms first, then body returns.
+
+      else {
+
+        const progress = smooth((time - 2450) / 450);
+
+        outlineOpacity = progress;
+
+        bodyOpacity = smooth((time - 2550) / 350);
+
+      }
+
+      // Sketchy white outline.
 
       ctx.save();
 
-      ctx.globalAlpha = opacity;
+      ctx.globalAlpha = outlineOpacity;
 
       ctx.shadowColor = "white";
 
-      ctx.shadowBlur = 24;
+      ctx.shadowBlur = 10;
 
       ctx.drawImage(outlineCanvas, 0, 0);
 
@@ -520,17 +540,23 @@ function drawFrame(now) {
 
       ctx.restore();
 
-      // Person cutout.
+      // Actual person.
 
       ctx.save();
 
-      ctx.globalAlpha = opacity;
+      ctx.globalAlpha = bodyOpacity;
 
       ctx.drawImage(subjectCanvas, 0, 0);
 
       ctx.restore();
 
     }
+
+    // Vertical lines and teleport energy.
+
+    drawGhostLines(time);
+
+    drawTeleport(time);
 
   } else {
 
@@ -539,12 +565,6 @@ function drawFrame(now) {
   }
 
   ctx.restore();
-
-  if (time >= 0) {
-
-    drawEnergy(time);
-
-  }
 
 }
 
@@ -586,7 +606,7 @@ function checkGesture(results) {
 
     } else if (!backgroundReady) {
 
-      say("CAPTURE YOUR BACKGROUND FIRST");
+      say("CAPTURE BACKGROUND FIRST");
 
     } else if (!hasMask) {
 
@@ -614,7 +634,7 @@ async function detectHands() {
 
   } catch (error) {
 
-    console.log("Hand detection:", error);
+    console.log(error);
 
   }
 
@@ -636,7 +656,7 @@ async function detectPerson() {
 
   } catch (error) {
 
-    console.log("Person detection:", error);
+    console.log(error);
 
   }
 
@@ -644,7 +664,7 @@ async function detectPerson() {
 
 }
 
-// MAIN ANIMATION
+// ANIMATION LOOP
 
 function animate(now) {
 
@@ -768,7 +788,7 @@ async function startCamera() {
 
 }
 
-// CAPTURE BACKGROUND
+// CAPTURE EMPTY BACKGROUND
 
 function captureBackground() {
 
@@ -780,11 +800,7 @@ function captureBackground() {
 
   }
 
-  backgroundCanvas = document.createElement("canvas");
-
-  backgroundCanvas.width = W;
-
-  backgroundCanvas.height = H;
+  backgroundCanvas = makeCanvas();
 
   const bgCtx = backgroundCanvas.getContext("2d");
 
