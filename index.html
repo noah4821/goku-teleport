@@ -8,9 +8,9 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>GOKU MODE 6.0</title>
+<title>MEETINGPORT MODE</title>
 
 <style>
 
@@ -20,9 +20,7 @@ body {
 
   margin: 0;
 
-  padding: 20px;
-
-  background: #050509;
+  background: #080a0e;
 
   color: white;
 
@@ -32,43 +30,47 @@ body {
 
 }
 
+header {
+
+  padding: 22px 12px 12px;
+
+}
+
 h1 {
 
-  font-size: 40px;
+  margin: 0;
 
-  letter-spacing: 5px;
+  font-size: 25px;
 
-  text-shadow: 0 0 15px white;
-
-}
-
-.subtitle {
-
-  color: #ccc;
-
-  letter-spacing: 6px;
-
-  font-size: 11px;
+  letter-spacing: 4px;
 
 }
 
-.canvas-box {
+#status {
 
-  position: relative;
+  color: #aaa;
 
-  width: 100%;
+  font-size: 13px;
 
-  max-width: 640px;
+  margin-top: 10px;
 
-  margin: 25px auto;
+}
 
-  padding: 5px;
+#screen {
 
-  border: 1px solid white;
+  width: min(94vw, 850px);
+
+  margin: 16px auto;
+
+  background: #15191f;
+
+  border: 1px solid #333b46;
 
   border-radius: 12px;
 
-  box-shadow: 0 0 12px #ffffff55;
+  overflow: hidden;
+
+  aspect-ratio: 16 / 9;
 
 }
 
@@ -78,97 +80,81 @@ canvas {
 
   width: 100%;
 
-  height: auto;
+  height: 100%;
 
-  border-radius: 7px;
-
-  background: #111;
+  object-fit: contain;
 
 }
 
-.hud {
+video {
 
-  position: absolute;
-
-  inset: 12px;
-
-  z-index: 3;
-
-  pointer-events: none;
-
-  background:
-
-    linear-gradient(white,white) top left / 34px 2px no-repeat,
-
-    linear-gradient(white,white) top left / 2px 34px no-repeat,
-
-    linear-gradient(white,white) top right / 34px 2px no-repeat,
-
-    linear-gradient(white,white) top right / 2px 34px no-repeat,
-
-    linear-gradient(white,white) bottom left / 34px 2px no-repeat,
-
-    linear-gradient(white,white) bottom left / 2px 34px no-repeat,
-
-    linear-gradient(white,white) bottom right / 34px 2px no-repeat,
-
-    linear-gradient(white,white) bottom right / 2px 34px no-repeat;
+  display: none;
 
 }
 
-video { display: none; }
+.controls {
+
+  display: flex;
+
+  justify-content: center;
+
+  flex-wrap: wrap;
+
+  gap: 10px;
+
+  padding: 12px;
+
+}
 
 button {
 
-  display: block;
+  border: 1px solid #444;
 
-  width: 100%;
-
-  max-width: 320px;
-
-  margin: 13px auto;
-
-  padding: 16px;
-
-  border: 1px solid white;
-
-  border-radius: 9px;
-
-  background: #101014;
+  background: #171c24;
 
   color: white;
 
-  font-weight: bold;
+  border-radius: 9px;
 
-  letter-spacing: 2px;
+  padding: 13px 18px;
+
+  font-size: 14px;
+
+  font-weight: bold;
 
 }
 
-button:active { transform: scale(.97); }
+button:active {
 
-button:disabled { opacity: .5; }
+  background: #343d4a;
 
-#status {
+}
 
-  min-height: 25px;
+#instructions {
 
-  color: #ddd;
+  max-width: 500px;
+
+  margin: 10px auto 30px;
+
+  padding: 0 18px;
+
+  color: #aeb5c0;
 
   font-size: 13px;
 
-  letter-spacing: 1px;
+  line-height: 1.7;
 
 }
 
-.footer {
+#hiddenStatus {
 
-  color: #777;
+  color: #fff;
 
-  font-size: 10px;
+  font-size: 14px;
 
-  letter-spacing: 4px;
+  letter-spacing: 2px;
 
-  margin-top: 25px;
+  margin: 12px;
 
 }
 
@@ -178,29 +164,43 @@ button:disabled { opacity: .5; }
 
 <body>
 
-<h1>GOKU MODE</h1>
+<header>
 
-<p class="subtitle">GHOST TRANSMISSION</p>
+  <h1>MEETINGPORT</h1>
 
-<div class="canvas-box">
+  <div id="status">CAMERA NOT STARTED</div>
 
-  <canvas id="view" width="640" height="480"></canvas>
+</header>
 
-  <div class="hud"></div>
+<div id="screen">
+
+  <canvas id="output" width="1280" height="720"></canvas>
 
 </div>
 
-<video id="camera" autoplay playsinline muted></video>
+<div id="hiddenStatus">PERSON VISIBLE</div>
 
-<button id="start">START CAMERA</button>
+<div class="controls">
 
-<button id="capture">CAPTURE BACKGROUND</button>
+  <button id="start">START CAMERA</button>
 
-<button id="reset">RESET</button>
+  <button id="capture" disabled>CAPTURE EMPTY ROOM</button>
 
-<p id="status">SYSTEM READY — PRESS START</p>
+</div>
 
-<p class="footer">POWER • FOCUS • TELEPORT</p>
+<div id="instructions">
+
+  1. Start your camera and allow permission.<br>
+
+  2. Leave the camera view, then capture the empty room.<br>
+
+  3. Return to your position in front of the camera.<br>
+
+  4. Show ✌️ to disappear. Show ✌️ again to reappear.
+
+</div>
+
+<video id="video" playsinline muted></video>
 
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 
@@ -208,89 +208,325 @@ button:disabled { opacity: .5; }
 
 <script>
 
-const video = document.getElementById("camera");
+const video = document.getElementById("video");
 
-const canvas = document.getElementById("view");
+const canvas = document.getElementById("output");
 
 const ctx = canvas.getContext("2d");
 
 const statusText = document.getElementById("status");
 
-const W = 640;
+const hiddenStatus = document.getElementById("hiddenStatus");
 
-const H = 480;
+const startButton = document.getElementById("start");
 
-let stream = null;
+const captureButton = document.getElementById("capture");
 
-let running = false;
+const W = canvas.width;
 
-let hands = null;
+const H = canvas.height;
 
-let segmentation = null;
+const backgroundCanvas = document.createElement("canvas");
 
-let handBusy = false;
+backgroundCanvas.width = W;
 
-let segmentationBusy = false;
+backgroundCanvas.height = H;
 
-let frameCount = 0;
+const backgroundCtx = backgroundCanvas.getContext("2d");
 
-let backgroundCanvas = null;
+const subjectCanvas = document.createElement("canvas");
 
-let backgroundReady = false;
+subjectCanvas.width = W;
 
-let hasMask = false;
-
-let previousGesture = false;
-
-let effectStart = null;
-
-function makeCanvas() {
-
-  const c = document.createElement("canvas");
-
-  c.width = W;
-
-  c.height = H;
-
-  return c;
-
-}
-
-const maskCanvas = makeCanvas();
-
-const maskCtx = maskCanvas.getContext("2d");
-
-const subjectCanvas = makeCanvas();
+subjectCanvas.height = H;
 
 const subjectCtx = subjectCanvas.getContext("2d");
 
-const outlineCanvas = makeCanvas();
+const maskCanvas = document.createElement("canvas");
 
-const outlineCtx = outlineCanvas.getContext("2d");
+maskCanvas.width = W;
 
-function say(message) {
+maskCanvas.height = H;
+
+const maskCtx = maskCanvas.getContext("2d");
+
+let cameraStarted = false;
+
+let backgroundReady = false;
+
+let personHidden = false;
+
+let gestureActive = false;
+
+let lastGestureTime = 0;
+
+let processing = false;
+
+let segmentationReady = false;
+
+let latestMask = null;
+
+function updateStatus(message) {
 
   statusText.textContent = message;
 
 }
 
-function smooth(t) {
+function updateHiddenStatus() {
 
-  t = Math.max(0, Math.min(1, t));
+  hiddenStatus.textContent =
 
-  return t * t * (3 - 2 * t);
+    personHidden ? "PERSON HIDDEN" : "PERSON VISIBLE";
 
 }
 
-// BODY SEGMENTATION
+function drawMirrored(source, targetCtx) {
 
-function onSegmentation(results) {
+  targetCtx.save();
+
+  targetCtx.translate(W, 0);
+
+  targetCtx.scale(-1, 1);
+
+  targetCtx.drawImage(source, 0, 0, W, H);
+
+  targetCtx.restore();
+
+}
+
+// MediaPipe segmentation
+
+const segmentation = new SelfieSegmentation({
+
+  locateFile: file =>
+
+    `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${file}`
+
+});
+
+segmentation.setOptions({
+
+  modelSelection: 1
+
+});
+
+segmentation.onResults(results => {
+
+  if (!results.segmentationMask) return;
 
   maskCtx.clearRect(0, 0, W, H);
 
   maskCtx.drawImage(results.segmentationMask, 0, 0, W, H);
 
-  // Extract the person.
+  latestMask = true;
+
+  segmentationReady = true;
+
+});
+
+// Hand detection
+
+const hands = new Hands({
+
+  locateFile: file =>
+
+    `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+
+});
+
+hands.setOptions({
+
+  maxNumHands: 1,
+
+  modelComplexity: 1,
+
+  minDetectionConfidence: 0.7,
+
+  minTrackingConfidence: 0.65
+
+});
+
+hands.onResults(results => {
+
+  let twoFingerGesture = false;
+
+  if (results.multiHandLandmarks &&
+
+      results.multiHandLandmarks.length > 0) {
+
+    const p = results.multiHandLandmarks[0];
+
+    const indexUp = p[8].y < p[6].y;
+
+    const middleUp = p[12].y < p[10].y;
+
+    const ringDown = p[16].y > p[14].y;
+
+    const pinkyDown = p[20].y > p[18].y;
+
+    twoFingerGesture =
+
+      indexUp && middleUp && ringDown && pinkyDown;
+
+  }
+
+  const now = Date.now();
+
+  if (
+
+    twoFingerGesture &&
+
+    !gestureActive &&
+
+    now - lastGestureTime > 1200 &&
+
+    backgroundReady
+
+  ) {
+
+    personHidden = !personHidden;
+
+    lastGestureTime = now;
+
+    updateHiddenStatus();
+
+  }
+
+  gestureActive = twoFingerGesture;
+
+});
+
+// Camera
+
+async function startCamera() {
+
+  try {
+
+    updateStatus("STARTING CAMERA...");
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+
+      video: {
+
+        facingMode: "user",
+
+        width: { ideal: 1280 },
+
+        height: { ideal: 720 }
+
+      },
+
+      audio: false
+
+    });
+
+    video.srcObject = stream;
+
+    await video.play();
+
+    cameraStarted = true;
+
+    captureButton.disabled = false;
+
+    startButton.disabled = true;
+
+    updateStatus("CAMERA READY — CAPTURE THE EMPTY ROOM");
+
+    processFrames();
+
+    renderLoop();
+
+  } catch (error) {
+
+    updateStatus("CAMERA ERROR — CHECK PERMISSIONS");
+
+    console.error(error);
+
+  }
+
+}
+
+async function processFrames() {
+
+  if (!cameraStarted) return;
+
+  if (video.readyState >= 2 && !processing) {
+
+    processing = true;
+
+    try {
+
+      await segmentation.send({ image: video });
+
+      await hands.send({ image: video });
+
+    } catch (error) {
+
+      console.error(error);
+
+    }
+
+    processing = false;
+
+  }
+
+  requestAnimationFrame(processFrames);
+
+}
+
+// Capture the empty room
+
+captureButton.addEventListener("click", () => {
+
+  if (!cameraStarted) return;
+
+  backgroundCtx.clearRect(0, 0, W, H);
+
+  backgroundCtx.drawImage(video, 0, 0, W, H);
+
+  backgroundReady = true;
+
+  personHidden = false;
+
+  updateHiddenStatus();
+
+  updateStatus("BACKGROUND LOCKED — SHOW ✌️ TO DISAPPEAR");
+
+});
+
+// Draw the frozen room and extracted person
+
+function renderLoop() {
+
+  requestAnimationFrame(renderLoop);
+
+  ctx.clearRect(0, 0, W, H);
+
+  if (!cameraStarted || !backgroundReady) {
+
+    if (video.readyState >= 2) {
+
+      drawMirrored(video, ctx);
+
+    } else {
+
+      ctx.fillStyle = "#15191f";
+
+      ctx.fillRect(0, 0, W, H);
+
+    }
+
+    return;
+
+  }
+
+  // Always show the captured room
+
+  drawMirrored(backgroundCanvas, ctx);
+
+  if (personHidden || !latestMask) return;
+
+  // Extract the person using the segmentation mask
 
   subjectCtx.clearRect(0, 0, W, H);
 
@@ -300,547 +536,15 @@ function onSegmentation(results) {
 
   subjectCtx.globalCompositeOperation = "destination-in";
 
-  subjectCtx.drawImage(maskCanvas, 0, 0);
+  subjectCtx.drawImage(maskCanvas, 0, 0, W, H);
 
   subjectCtx.globalCompositeOperation = "source-over";
 
-  // Create a thin white silhouette outline.
-
-  outlineCtx.clearRect(0, 0, W, H);
-
-  outlineCtx.globalCompositeOperation = "source-over";
-
-  const offsets = [
-
-    [-2,0], [2,0], [0,-2], [0,2],
-
-    [-2,-2], [2,-2], [-2,2], [2,2],
-
-    [-4,0], [4,0], [0,-4], [0,4]
-
-  ];
-
-  offsets.forEach(([x,y]) => {
-
-    outlineCtx.drawImage(maskCanvas, x, y);
-
-  });
-
-  outlineCtx.globalCompositeOperation = "source-in";
-
-  outlineCtx.fillStyle = "white";
-
-  outlineCtx.fillRect(0, 0, W, H);
-
-  outlineCtx.globalCompositeOperation = "destination-out";
-
-  outlineCtx.drawImage(maskCanvas, 0, 0);
-
-  outlineCtx.globalCompositeOperation = "source-over";
-
-  hasMask = true;
+  drawMirrored(subjectCanvas, ctx);
 
 }
 
-// VERTICAL GHOST ENERGY LINES
-
-function drawGhostLines(time) {
-
-  ctx.save();
-
-  ctx.globalCompositeOperation = "lighter";
-
-  for (let i = 0; i < 34; i++) {
-
-    const x = (i * 59 + 17) % W;
-
-    const offset = (time * (0.06 + (i % 4) * 0.025)) % 150;
-
-    const y = -80 + offset;
-
-    const height = 35 + (i % 5) * 24;
-
-    const alpha = 0.18 + (i % 4) * 0.08;
-
-    ctx.beginPath();
-
-    ctx.moveTo(x, y);
-
-    ctx.lineTo(x, y + height);
-
-    ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
-
-    ctx.lineWidth = i % 5 === 0 ? 2 : 1;
-
-    ctx.shadowColor = "white";
-
-    ctx.shadowBlur = 5;
-
-    ctx.stroke();
-
-  }
-
-  ctx.restore();
-
-}
-
-// TELEPORT FLASH AND STREAKS
-
-function drawTeleport(time) {
-
-  ctx.save();
-
-  ctx.globalCompositeOperation = "lighter";
-
-  // Initial white flash.
-
-  if (time < 180) {
-
-    const alpha = 0.65 * (1 - time / 180);
-
-    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-
-    ctx.fillRect(0, 0, W, H);
-
-  }
-
-  // Horizontal energy streaks.
-
-  for (let i = 0; i < 12; i++) {
-
-    const progress = ((time * 0.0015 + i * 0.17) % 1);
-
-    const y = (i * 43 + 30) % H;
-
-    const x = progress * W;
-
-    ctx.beginPath();
-
-    ctx.moveTo(x, y);
-
-    ctx.lineTo(x - 55, y + 5);
-
-    ctx.strokeStyle = `rgba(255,255,255,${1-progress})`;
-
-    ctx.lineWidth = 2;
-
-    ctx.shadowColor = "white";
-
-    ctx.shadowBlur = 10;
-
-    ctx.stroke();
-
-  }
-
-  // Reappearance flash.
-
-  if (time > 2400 && time < 2600) {
-
-    const alpha = 0.5 * (1 - (time - 2400) / 200);
-
-    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-
-    ctx.fillRect(0, 0, W, H);
-
-  }
-
-  ctx.restore();
-
-}
-
-// MAIN DRAWING
-
-function drawFrame(now) {
-
-  if (video.readyState < 2) return;
-
-  ctx.clearRect(0, 0, W, H);
-
-  let time = -1;
-
-  if (effectStart !== null) {
-
-    time = now - effectStart;
-
-    if (time > 2900) {
-
-      effectStart = null;
-
-      time = -1;
-
-      say("READY — SHOW TWO FINGERS");
-
-    }
-
-  }
-
-  ctx.save();
-
-  ctx.translate(W, 0);
-
-  ctx.scale(-1, 1);
-
-  if (time >= 0 && backgroundReady) {
-
-    ctx.drawImage(backgroundCanvas, 0, 0, W, H);
-
-    if (hasMask) {
-
-      let bodyOpacity = 1;
-
-      let outlineOpacity = 1;
-
-      // Disappear over 0.45 seconds.
-
-      if (time < 450) {
-
-        bodyOpacity = 1 - smooth(time / 450);
-
-        outlineOpacity = 1;
-
-      }
-
-      // Stay completely invisible for 2 seconds.
-
-      else if (time < 2450) {
-
-        bodyOpacity = 0;
-
-        outlineOpacity = 0;
-
-      }
-
-      // Outline forms first, then body returns.
-
-      else {
-
-        const progress = smooth((time - 2450) / 450);
-
-        outlineOpacity = progress;
-
-        bodyOpacity = smooth((time - 2550) / 350);
-
-      }
-
-      // Sketchy white outline.
-
-      ctx.save();
-
-      ctx.globalAlpha = outlineOpacity;
-
-      ctx.shadowColor = "white";
-
-      ctx.shadowBlur = 10;
-
-      ctx.drawImage(outlineCanvas, 0, 0);
-
-      ctx.shadowBlur = 0;
-
-      ctx.drawImage(outlineCanvas, 0, 0);
-
-      ctx.restore();
-
-      // Actual person.
-
-      ctx.save();
-
-      ctx.globalAlpha = bodyOpacity;
-
-      ctx.drawImage(subjectCanvas, 0, 0);
-
-      ctx.restore();
-
-    }
-
-    // Vertical lines and teleport energy.
-
-    drawGhostLines(time);
-
-    drawTeleport(time);
-
-  } else {
-
-    ctx.drawImage(video, 0, 0, W, H);
-
-  }
-
-  ctx.restore();
-
-}
-
-// TWO-FINGER GESTURE
-
-function checkGesture(results) {
-
-  let gesture = false;
-
-  if (
-
-    results.multiHandLandmarks &&
-
-    results.multiHandLandmarks.length > 0
-
-  ) {
-
-    const hand = results.multiHandLandmarks[0];
-
-    const indexUp = hand[8].y < hand[6].y;
-
-    const middleUp = hand[12].y < hand[10].y;
-
-    const ringDown = hand[16].y > hand[14].y;
-
-    const pinkyDown = hand[20].y > hand[18].y;
-
-    gesture = indexUp && middleUp && ringDown && pinkyDown;
-
-  }
-
-  if (gesture && !previousGesture) {
-
-    if (backgroundReady && hasMask && effectStart === null) {
-
-      effectStart = performance.now();
-
-      say("INSTANT TRANSMISSION!");
-
-    } else if (!backgroundReady) {
-
-      say("CAPTURE BACKGROUND FIRST");
-
-    } else if (!hasMask) {
-
-      say("WAITING FOR BODY DETECTION...");
-
-    }
-
-  }
-
-  previousGesture = gesture;
-
-}
-
-// HAND DETECTION
-
-async function detectHands() {
-
-  if (!running || !hands || handBusy) return;
-
-  handBusy = true;
-
-  try {
-
-    await hands.send({ image: video });
-
-  } catch (error) {
-
-    console.log(error);
-
-  }
-
-  handBusy = false;
-
-}
-
-// PERSON DETECTION
-
-async function detectPerson() {
-
-  if (!running || !segmentation || segmentationBusy) return;
-
-  segmentationBusy = true;
-
-  try {
-
-    await segmentation.send({ image: video });
-
-  } catch (error) {
-
-    console.log(error);
-
-  }
-
-  segmentationBusy = false;
-
-}
-
-// ANIMATION LOOP
-
-function animate(now) {
-
-  if (!running) return;
-
-  drawFrame(now);
-
-  frameCount++;
-
-  if (frameCount % 2 === 0) {
-
-    detectPerson();
-
-  }
-
-  if (frameCount % 4 === 0) {
-
-    detectHands();
-
-  }
-
-  requestAnimationFrame(animate);
-
-}
-
-// START CAMERA
-
-async function startCamera() {
-
-  if (running) return;
-
-  document.getElementById("start").disabled = true;
-
-  try {
-
-    say("STARTING CAMERA...");
-
-    stream = await navigator.mediaDevices.getUserMedia({
-
-      audio: false,
-
-      video: {
-
-        facingMode: "user",
-
-        width: { ideal: 640 },
-
-        height: { ideal: 480 }
-
-      }
-
-    });
-
-    video.srcObject = stream;
-
-    await video.play();
-
-    say("LOADING BODY DETECTION...");
-
-    segmentation = new SelfieSegmentation({
-
-      locateFile: file =>
-
-        "https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/" + file
-
-    });
-
-    segmentation.setOptions({
-
-      modelSelection: 1
-
-    });
-
-    segmentation.onResults(onSegmentation);
-
-    say("LOADING HAND DETECTION...");
-
-    hands = new Hands({
-
-      locateFile: file =>
-
-        "https://cdn.jsdelivr.net/npm/@mediapipe/hands/" + file
-
-    });
-
-    hands.setOptions({
-
-      maxNumHands: 1,
-
-      modelComplexity: 0,
-
-      minDetectionConfidence: 0.6,
-
-      minTrackingConfidence: 0.6
-
-    });
-
-    hands.onResults(checkGesture);
-
-    running = true;
-
-    say("SYSTEM READY — CAPTURE BACKGROUND");
-
-    requestAnimationFrame(animate);
-
-  } catch (error) {
-
-    say("ERROR: " + error.message);
-
-    document.getElementById("start").disabled = false;
-
-    if (stream) {
-
-      stream.getTracks().forEach(track => track.stop());
-
-      stream = null;
-
-    }
-
-  }
-
-}
-
-// CAPTURE EMPTY BACKGROUND
-
-function captureBackground() {
-
-  if (!running || video.readyState < 2) {
-
-    say("START CAMERA FIRST");
-
-    return;
-
-  }
-
-  backgroundCanvas = makeCanvas();
-
-  const bgCtx = backgroundCanvas.getContext("2d");
-
-  bgCtx.drawImage(video, 0, 0, W, H);
-
-  backgroundReady = true;
-
-  effectStart = null;
-
-  say("BACKGROUND LOCKED — READY TO TELEPORT");
-
-}
-
-// RESET
-
-function resetApp() {
-
-  backgroundCanvas = null;
-
-  backgroundReady = false;
-
-  effectStart = null;
-
-  previousGesture = false;
-
-  say("RESET — CAPTURE BACKGROUND AGAIN");
-
-}
-
-document.getElementById("start")
-
-  .addEventListener("click", startCamera);
-
-document.getElementById("capture")
-
-  .addEventListener("click", captureBackground);
-
-document.getElementById("reset")
-
-  .addEventListener("click", resetApp);
+startButton.addEventListener("click", startCamera);
 
 </script>
 
